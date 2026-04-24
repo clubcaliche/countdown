@@ -1,150 +1,208 @@
-/* ============================================================
-   CONSTANTS & STORAGE KEYS
-   ============================================================ */
-const STORAGE_KEY_NAME = 'countdown_event_name';
-const STORAGE_KEY_DATE = 'countdown_target_date';
-const STORAGE_KEY_TIME = 'countdown_target_time';
+const STORAGE_KEYS = {
+  name: "countdown.event.name",
+  description: "countdown.event.description",
+  date: "countdown.event.date",
+  time: "countdown.event.time"
+};
 
-/** Returns a default target date 30 days from now as "YYYY-MM-DD". */
-function defaultTargetDate() {
-  const d = new Date();
-  d.setDate(d.getDate() + 30);
-  const yyyy = d.getFullYear();
-  const mm   = String(d.getMonth() + 1).padStart(2, '0');
-  const dd   = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+const DEFAULT_NAME = "Coming Soon";
+const DEFAULT_DESCRIPTION = "The next milestone is on the clock.";
+const DEFAULT_TIME = "18:00";
+
+function formatDatePart(value) {
+  return String(value).padStart(2, "0");
 }
 
-/** Loads config from localStorage, falling back to sensible defaults. */
-function loadConfig() {
+function getDefaultFutureDate() {
+  const future = new Date();
+  future.setDate(future.getDate() + 30);
+
+  return [
+    future.getFullYear(),
+    formatDatePart(future.getMonth() + 1),
+    formatDatePart(future.getDate())
+  ].join("-");
+}
+
+function getDefaultConfig() {
   return {
-    name:       localStorage.getItem(STORAGE_KEY_NAME) || 'Coming Soon',
-    targetDate: localStorage.getItem(STORAGE_KEY_DATE) || defaultTargetDate(),
-    targetTime: localStorage.getItem(STORAGE_KEY_TIME) || '00:00',
+    name: DEFAULT_NAME,
+    description: DEFAULT_DESCRIPTION,
+    date: getDefaultFutureDate(),
+    time: DEFAULT_TIME
   };
 }
 
-/** Saves config values to localStorage. */
-function saveConfig(name, targetDate, targetTime) {
-  localStorage.setItem(STORAGE_KEY_NAME, name);
-  localStorage.setItem(STORAGE_KEY_DATE, targetDate);
-  localStorage.setItem(STORAGE_KEY_TIME, targetTime);
+function readStoredConfig() {
+  const defaults = getDefaultConfig();
+
+  return {
+    name: (localStorage.getItem(STORAGE_KEYS.name) || defaults.name).trim() || defaults.name,
+    description: (localStorage.getItem(STORAGE_KEYS.description) || defaults.description).trim() || defaults.description,
+    date: (localStorage.getItem(STORAGE_KEYS.date) || defaults.date).trim() || defaults.date,
+    time: (localStorage.getItem(STORAGE_KEYS.time) || defaults.time).trim() || defaults.time
+  };
 }
 
-/* ============================================================
-   COUNTDOWN PAGE LOGIC
-   ============================================================ */
+function writeStoredConfig(config) {
+  localStorage.setItem(STORAGE_KEYS.name, config.name);
+  localStorage.setItem(STORAGE_KEYS.description, config.description);
+  localStorage.setItem(STORAGE_KEYS.date, config.date);
+  localStorage.setItem(STORAGE_KEYS.time, config.time);
+}
+
+function buildTargetDate(dateValue, timeValue) {
+  const target = new Date(`${dateValue}T${timeValue}:00`);
+  return Number.isNaN(target.getTime()) ? null : target;
+}
+
+function formatTargetForDisplay(target) {
+  if (!target) {
+    return "Invalid date";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(target);
+}
+
+function padUnit(value) {
+  return String(Math.max(0, value)).padStart(2, "0");
+}
+
+function showElement(element, shouldShow) {
+  if (!element) {
+    return;
+  }
+
+  element.classList.toggle("is-hidden", !shouldShow);
+}
+
 function initCountdownPage() {
-  const titleEl   = document.getElementById('eventTitle');
-  const timerEl   = document.getElementById('timer');
-  const expiredEl = document.getElementById('expiredMessage');
+  const title = document.getElementById("eventTitle");
+  const subtitle = document.getElementById("eventSubtitle");
+  const targetDisplay = document.getElementById("targetDisplay");
+  const countdownGrid = document.getElementById("countdownGrid");
+  const expiredState = document.getElementById("expiredState");
+  const days = document.getElementById("days");
+  const hours = document.getElementById("hours");
+  const minutes = document.getElementById("minutes");
+  const seconds = document.getElementById("seconds");
 
-  const daysEl    = document.getElementById('days');
-  const hoursEl   = document.getElementById('hours');
-  const minutesEl = document.getElementById('minutes');
-  const secondsEl = document.getElementById('seconds');
-
-  if (!titleEl || !timerEl || !expiredEl) return; // not on this page
-
-  /** Pads a number to at least 2 digits. */
-  function pad(n) {
-    return String(Math.max(0, n)).padStart(2, '0');
+  if (!title || !subtitle || !targetDisplay || !countdownGrid || !expiredState) {
+    return;
   }
 
-  function tick() {
-    const config = loadConfig();
-    titleEl.textContent = config.name;
+  const render = () => {
+    const config = readStoredConfig();
+    const target = buildTargetDate(config.date, config.time);
+    const now = new Date();
 
-    const target = new Date(`${config.targetDate}T${config.targetTime}:00`);
-    const now    = new Date();
-    const diff   = target - now; // ms
+    title.textContent = config.name;
+    subtitle.textContent = config.description;
+    targetDisplay.textContent = formatTargetForDisplay(target);
 
-    if (isNaN(target.getTime()) || diff <= 0) {
-      // Countdown finished or invalid date
-      timerEl.style.display   = 'none';
-      expiredEl.style.display = 'block';
+    if (!target) {
+      showElement(countdownGrid, false);
+      showElement(expiredState, true);
+      expiredState.querySelector(".status-title").textContent = "Invalid target date";
+      expiredState.querySelector(".status-copy").textContent = "Open the admin page and save a valid date and time.";
       return;
     }
 
-    timerEl.style.display   = '';
-    expiredEl.style.display = 'none';
+    const difference = target.getTime() - now.getTime();
 
-    const totalSeconds = Math.floor(diff / 1000);
-    const days    = Math.floor(totalSeconds / 86400);
-    const hours   = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+    if (difference <= 0) {
+      showElement(countdownGrid, false);
+      showElement(expiredState, true);
+      expiredState.querySelector(".status-title").textContent = "It's time!";
+      expiredState.querySelector(".status-copy").textContent = "The scheduled moment has arrived.";
+      return;
+    }
 
-    daysEl.textContent    = pad(days);
-    hoursEl.textContent   = pad(hours);
-    minutesEl.textContent = pad(minutes);
-    secondsEl.textContent = pad(seconds);
-  }
+    showElement(countdownGrid, true);
+    showElement(expiredState, false);
 
-  // Run immediately, then every second
-  tick();
-  setInterval(tick, 1000);
+    const totalSeconds = Math.floor(difference / 1000);
+    const dayValue = Math.floor(totalSeconds / 86400);
+    const hourValue = Math.floor((totalSeconds % 86400) / 3600);
+    const minuteValue = Math.floor((totalSeconds % 3600) / 60);
+    const secondValue = totalSeconds % 60;
+
+    days.textContent = padUnit(dayValue);
+    hours.textContent = padUnit(hourValue);
+    minutes.textContent = padUnit(minuteValue);
+    seconds.textContent = padUnit(secondValue);
+  };
+
+  render();
+  window.setInterval(render, 1000);
+  window.addEventListener("storage", render);
 }
 
-/* ============================================================
-   ADMIN PAGE LOGIC
-   ============================================================ */
 function initAdminPage() {
-  const form         = document.getElementById('adminForm');
-  const nameInput    = document.getElementById('eventName');
-  const dateInput    = document.getElementById('targetDate');
-  const timeInput    = document.getElementById('targetTime');
-  const confirmation = document.getElementById('confirmation');
+  const form = document.getElementById("adminForm");
+  const saveMessage = document.getElementById("saveMessage");
+  const eventName = document.getElementById("eventName");
+  const eventDescription = document.getElementById("eventDescription");
+  const targetDate = document.getElementById("targetDate");
+  const targetTime = document.getElementById("targetTime");
 
-  if (!form || !nameInput || !dateInput || !timeInput) return; // not on this page
+  if (!form || !eventName || !eventDescription || !targetDate || !targetTime) {
+    return;
+  }
 
-  // Pre-populate from localStorage
-  const config = loadConfig();
-  nameInput.value = config.name !== 'Coming Soon' ? config.name : '';
-  dateInput.value = config.targetDate;
-  timeInput.value = config.targetTime;
+  const populateFields = () => {
+    const config = readStoredConfig();
+    eventName.value = config.name;
+    eventDescription.value = config.description;
+    targetDate.value = config.date;
+    targetTime.value = config.time;
+  };
 
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
+  const hideMessage = () => showElement(saveMessage, false);
 
-    const name       = nameInput.value.trim() || 'Coming Soon';
-    const targetDate = dateInput.value;
-    const targetTime = timeInput.value || '00:00';
+  populateFields();
 
-    if (!targetDate) {
-      dateInput.focus();
-      dateInput.reportValidity();
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    if (!targetDate.value) {
+      targetDate.reportValidity();
       return;
     }
 
-    saveConfig(name, targetDate, targetTime);
-
-    // Show confirmation
-    if (confirmation) {
-      confirmation.classList.add('visible');
-      // Scroll to confirmation in case form is long
-      confirmation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (!targetTime.value) {
+      targetTime.reportValidity();
+      return;
     }
+
+    const config = {
+      name: eventName.value.trim() || DEFAULT_NAME,
+      description: eventDescription.value.trim() || DEFAULT_DESCRIPTION,
+      date: targetDate.value,
+      time: targetTime.value
+    };
+
+    writeStoredConfig(config);
+    showElement(saveMessage, true);
   });
 
-  // Hide confirmation when user edits fields again
-  [nameInput, dateInput, timeInput].forEach(function (el) {
-    el.addEventListener('input', function () {
-      if (confirmation) {
-        confirmation.classList.remove('visible');
-      }
-    });
+  [eventName, eventDescription, targetDate, targetTime].forEach((field) => {
+    field.addEventListener("input", hideMessage);
+    field.addEventListener("change", hideMessage);
   });
 }
 
-/* ============================================================
-   ROUTER — detect page and initialise accordingly
-   ============================================================ */
-(function init() {
-  // Use presence of key elements to decide which page we're on
-  if (document.body.classList.contains('page-admin')) {
-    initAdminPage();
-  } else if (document.body.classList.contains('page-countdown')) {
-    initCountdownPage();
-  }
-})();
+if (document.body.classList.contains("page-countdown")) {
+  initCountdownPage();
+}
+
+if (document.body.classList.contains("page-admin")) {
+  initAdminPage();
+}

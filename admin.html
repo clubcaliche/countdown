@@ -1,61 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Countdown — Admin</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Countdown Admin</title>
+  <meta name="description" content="Configure the countdown event title, date, and time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="page-admin">
+<body class="page page-admin">
+  <div class="page-shell">
+    <main class="hero-card admin-card">
+      <p class="eyebrow">Configuration</p>
+      <h1 class="panel-title">Countdown Control Panel</h1>
+      <p class="panel-copy">Set the event title, description, date, and time. Changes are saved to your browser and reflected on the public page immediately.</p>
 
-  <div class="admin-wrapper">
-    <h1 class="admin-heading">⚙ Configure Countdown</h1>
-
-    <form class="admin-form" id="adminForm" novalidate>
-
-      <div class="form-group">
-        <label for="eventName">Event Name / Description</label>
-        <input
-          type="text"
-          id="eventName"
-          name="eventName"
-          placeholder="e.g. Product Launch"
-          maxlength="80"
-          required
-        />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="targetDate">Target Date</label>
-          <input
-            type="date"
-            id="targetDate"
-            name="targetDate"
-            required
-          />
+      <form class="admin-form" id="adminForm" novalidate>
+        <div class="field-group">
+          <label for="eventName">Event Name</label>
+          <input id="eventName" name="eventName" type="text" maxlength="80" placeholder="Launch Night">
         </div>
-        <div class="form-group">
-          <label for="targetTime">Target Time</label>
-          <input
-            type="time"
-            id="targetTime"
-            name="targetTime"
-            required
-          />
+
+        <div class="field-group">
+          <label for="eventDescription">Event Description</label>
+          <textarea id="eventDescription" name="eventDescription" rows="3" maxlength="180" placeholder="Doors open, stream starts, or whatever should appear on the countdown page."></textarea>
         </div>
-      </div>
 
-      <button type="submit" class="btn-save">Save Configuration</button>
-    </form>
+        <div class="field-row">
+          <div class="field-group">
+            <label for="targetDate">Target Date</label>
+            <input id="targetDate" name="targetDate" type="date" required>
+          </div>
 
-    <div class="confirmation" id="confirmation">
-      <span class="confirmation-icon">✅</span>
-      <p>Configuration saved successfully!</p>
-      <a href="index.html" class="btn-view">View Countdown →</a>
-    </div>
+          <div class="field-group">
+            <label for="targetTime">Target Time</label>
+            <input id="targetTime" name="targetTime" type="time" required>
+          </div>
+        </div>
 
-    <a class="back-link" href="index.html">← Back to Countdown</a>
+        <button class="primary-button" type="submit">Save Countdown</button>
+      </form>
+
+      <section class="status-card is-hidden" id="saveMessage" aria-live="polite">
+        <p class="status-label">Saved</p>
+        <h2 class="status-title">Configuration updated.</h2>
+        <p class="status-copy">The countdown page now uses the values stored in localStorage.</p>
+        <a class="secondary-link" href="index.html">Back to countdown</a>
+      </section>
+
+      <a class="back-link" href="index.html">Return to public countdown</a>
+    </main>
   </div>
 
   <script src="script.js"></script>

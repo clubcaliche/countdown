@@ -1,45 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Countdown Timer</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Countdown</title>
+  <meta name="description" content="A polished countdown timer with configurable event details.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="page-countdown">
+<body class="page page-countdown">
+  <div class="page-shell">
+    <main class="hero-card countdown-card">
+      <p class="eyebrow">Countdown in Progress</p>
+      <h1 class="event-title" id="eventTitle">Coming Soon</h1>
+      <p class="event-subtitle" id="eventSubtitle">The next milestone is on the clock.</p>
 
-  <div class="countdown-wrapper">
-    <p class="event-label">COUNTING DOWN TO</p>
-    <h1 class="event-title" id="eventTitle">Coming Soon</h1>
+      <section class="countdown-panel" aria-label="Countdown timer">
+        <div class="countdown-grid" id="countdownGrid">
+          <article class="time-card">
+            <span class="time-value" id="days">30</span>
+            <span class="time-label">Days</span>
+          </article>
+          <article class="time-card">
+            <span class="time-value" id="hours">00</span>
+            <span class="time-label">Hours</span>
+          </article>
+          <article class="time-card">
+            <span class="time-value" id="minutes">00</span>
+            <span class="time-label">Minutes</span>
+          </article>
+          <article class="time-card">
+            <span class="time-value" id="seconds">00</span>
+            <span class="time-label">Seconds</span>
+          </article>
+        </div>
 
-    <div class="timer" id="timer">
-      <div class="timer-block">
-        <span class="timer-value" id="days">00</span>
-        <span class="timer-label">Days</span>
-      </div>
-      <div class="timer-separator">:</div>
-      <div class="timer-block">
-        <span class="timer-value" id="hours">00</span>
-        <span class="timer-label">Hours</span>
-      </div>
-      <div class="timer-separator">:</div>
-      <div class="timer-block">
-        <span class="timer-value" id="minutes">00</span>
-        <span class="timer-label">Minutes</span>
-      </div>
-      <div class="timer-separator">:</div>
-      <div class="timer-block">
-        <span class="timer-value" id="seconds">00</span>
-        <span class="timer-label">Seconds</span>
-      </div>
-    </div>
+        <div class="status-card is-hidden" id="expiredState" aria-live="polite">
+          <p class="status-label">Countdown Complete</p>
+          <h2 class="status-title">It's time!</h2>
+          <p class="status-copy">The scheduled moment has arrived.</p>
+        </div>
+      </section>
 
-    <div class="expired-message" id="expiredMessage">
-      <span>🎉 It's time!</span>
-    </div>
+      <div class="meta-row">
+        <div class="meta-block">
+          <span class="meta-label">Target</span>
+          <span class="meta-value" id="targetDisplay">Loading...</span>
+        </div>
+      </div>
+    </main>
+
+    <a class="admin-link" href="admin.html">Admin</a>
   </div>
-
-  <a class="admin-link" href="admin.html">⚙ Configure</a>
 
   <script src="script.js"></script>
 </body>
